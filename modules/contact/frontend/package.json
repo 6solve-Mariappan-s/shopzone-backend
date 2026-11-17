@@ -1,0 +1,21 @@
+{
+  "name": "@shopzone/contact-mfe",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../../scripts/federation-dev.js 3010",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 3010 --strictPort",
+    "stop": "node ../../../scripts/stop-port.js 3010"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@originjs/vite-plugin-federation": "^1.4.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "vite": "^6.4.1"
+  }
+}

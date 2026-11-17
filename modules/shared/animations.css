@@ -1,0 +1,44 @@
+@keyframes shopzone-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shopzone-pop {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.22); }
+}
+.shopzone-module { animation: shopzone-enter .42s cubic-bezier(.2,.75,.25,1) both; }
+.shopzone-module > .module-kicker,
+.shopzone-module > h1,
+.shopzone-module > .module-description,
+.hero-copy h1,
+.hero-copy .module-description { text-align: center; margin-inline: auto; }
+.shopzone-module > .module-kicker { display: block; }
+.product-card,
+.wishlist-card,
+.order-card,
+.admin-product-row,
+.inventory-row,
+.dashboard-card { animation: shopzone-enter .45s both; }
+.product-card:nth-child(3n + 2), .wishlist-card:nth-child(3n + 2), .order-card:nth-child(3n + 2) { animation-delay: 60ms; }
+.product-card:nth-child(3n + 3), .wishlist-card:nth-child(3n + 3), .order-card:nth-child(3n + 3) { animation-delay: 120ms; }
+.cart-button,
+.checkout-primary,
+.wishlist-info button,
+.admin-product-row button,
+.stock-form button,
+.main-nav button { transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease; }
+.cart-button:hover:not(:disabled),
+.checkout-primary:hover:not(:disabled),
+.wishlist-info button:hover:not(:disabled),
+.admin-product-row button:hover,
+.stock-form button:hover:not(:disabled),
+.main-nav button:hover { transform: translateY(-2px); box-shadow: 0 5px 14px #34211320; }
+.product-image img,
+.wishlist-image img,
+.cart-line-image img,
+.admin-thumb img { transition: transform .35s ease; }
+.product-card:hover .product-image img,
+.wishlist-card:hover .wishlist-image img { transform: scale(1.04); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}

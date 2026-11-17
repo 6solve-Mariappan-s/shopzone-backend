@@ -1,0 +1,301 @@
+openapi: 3.1.0
+info:
+  title: ShopZone API
+  version: 1.0.0
+  description: Catalog, account, inventory and operations API. Money amounts are integer paise.
+servers:
+  - url: http://localhost:4000/api
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+paths:
+  /auth/register:
+    post:
+      security: []
+      summary: Register a customer and start a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 120 }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        "201": { description: Customer created; sets an HTTP-only session cookie }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /auth/login:
+    post:
+      security: []
+      summary: Sign in and start a session
+      responses:
+        "200": { description: Session cookie and public user profile }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /auth/me:
+    get:
+      summary: Get the authenticated user
+      responses:
+        "200": { description: Current user }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /auth/logout:
+    post:
+      security: []
+      summary: Clear the session cookie
+      responses:
+        "204": { description: Signed out }
+  /products:
+    get:
+      security: []
+      summary: Search and paginate active products
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [popular, price-low, price-high, newest] }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 48, default: 12 }
+      responses:
+        "200": { description: Paginated product results }
+    post:
+      summary: Create a product (super-admin or inventory staff)
+      responses:
+        "201": { description: Product created with inventory }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /products/categories:
+    get:
+      security: []
+      summary: List product categories
+      responses:
+        "200": { description: Category list }
+  /products/{idOrSlug}:
+    get:
+      security: []
+      summary: Get an active product
+      parameters:
+        - in: path
+          name: idOrSlug
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Product details and inventory availability }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      summary: Update product information or stock (role-limited)
+      parameters:
+        - in: path
+          name: idOrSlug
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Updated product }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      summary: Archive a product (super-admin only)
+      parameters:
+        - in: path
+          name: idOrSlug
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: x-confirm-delete
+          required: true
+          schema: { type: string, description: Must equal the product slug }
+      responses:
+        "204": { description: Product archived and action audited }
+  /shop/profile:
+    get:
+      summary: Get the current profile and addresses
+      responses:
+        "200": { description: Profile }
+    patch:
+      summary: Update the current customer's name
+      responses:
+        "200": { description: Updated profile }
+  /shop/addresses:
+    get:
+      summary: List the current customer's addresses
+      responses:
+        "200": { description: Address list }
+    post:
+      summary: Add an Indian delivery address
+      responses:
+        "201": { description: Address created }
+  /shop/addresses/{id}:
+    delete:
+      summary: Delete an address owned by the current customer
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Address deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /shop/cart:
+    get:
+      summary: Get the current customer's cart
+      responses:
+        "200": { description: Cart and INR total in paise }
+  /shop/cart/items:
+    post:
+      summary: Add an available product to the current customer's cart
+      responses:
+        "201": { description: Cart item created }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /shop/cart/items/{id}:
+    patch:
+      summary: Set a cart item's quantity
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Cart item updated }
+    delete:
+      summary: Remove a cart item
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Cart item removed }
+  /shop/checkout:
+    post:
+      summary: Place a Cash on Delivery order
+      description: Stock decrement and order creation are transactional. Online methods return 503 until a payment provider is configured.
+      responses:
+        "201": { description: Order placed }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { description: Requested payment provider is unavailable }
+  /shop/orders:
+    get:
+      summary: List orders belonging to the current customer
+      responses:
+        "200": { description: Order history }
+  /shop/orders/{id}:
+    get:
+      summary: Get an order belonging to the current customer
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Order, items, payment and tracking status }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /shop/wishlist:
+    get:
+      summary: Get the current customer's wishlist
+      responses:
+        "200": { description: Wishlist items }
+  /shop/wishlist/{productId}:
+    post:
+      summary: Add a product to the current customer's wishlist
+      parameters:
+        - { in: path, name: productId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "201": { description: Wishlist item created }
+    delete:
+      summary: Remove a product from the current customer's wishlist
+      parameters:
+        - { in: path, name: productId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Wishlist item removed }
+  /admin/inventory:
+    get:
+      summary: List inventory (authorized staff)
+      responses:
+        "200": { description: Inventory list }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/inventory/{productId}/adjust:
+    post:
+      summary: Adjust stock and audit the action
+      parameters:
+        - { in: path, name: productId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Stock adjustment recorded }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /admin/orders/{id}/status:
+    patch:
+      summary: Advance or cancel an order (super-admin or manager)
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Order status updated and audited }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /admin/orders/{id}/refunds:
+    post:
+      summary: Record a refund request for a captured payment (super-admin or manager)
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "201": { description: Refund request recorded; payment provider processing is not configured }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /admin/refunds:
+    get:
+      summary: List refund requests (super-admin or manager)
+      responses:
+        "200": { description: Refund request list }
+  /admin/users:
+    get:
+      summary: List users (super-admin only)
+      responses:
+        "200": { description: User list without password hashes }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      summary: Create an employee account (super-admin only)
+      responses:
+        "201": { description: Employee created without returning password data }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /admin/users/{id}/role:
+    patch:
+      summary: Change a user's role or active status (super-admin only)
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Access updated and audited }
+  /admin/reports/sales:
+    get:
+      summary: Get sales totals for a date range (super-admin or manager)
+      responses:
+        "200": { description: Sales summary }
+  /admin/audit-logs:
+    get:
+      summary: Read administrative audit entries (super-admin only)
+      responses:
+        "200": { description: Audit log }
+  /admin/export:
+    get:
+      summary: Export system data (super-admin only)
+      parameters:
+        - in: header
+          name: x-confirm-export
+          required: true
+          schema: { type: string, const: EXPORT }
+      responses:
+        "200": { description: Exported data; action is audited }
+        "400": { $ref: "#/components/responses/BadRequest" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: bb-token
+  responses:
+    BadRequest:
+      description: Invalid request
+    Unauthorized:
+      description: Authentication required or session is invalid
+    Forbidden:
+      description: Role is not allowed to perform this operation
+    NotFound:
+      description: Resource not found
+    Conflict:
+      description: Request conflicts with current state

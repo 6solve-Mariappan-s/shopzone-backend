@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { z } from "zod";
+import { list, get, create, update, remove } from "../controllers/entity.js";
+import { Product } from "../models/Product.js";
+import { requireAuth, optionalAuth, allowRoles } from "../middleware.js";
+export const router = Router();
+router.get("/categories", async (_req, res, next) => { try { const rows = await Product.findAll({ attributes: [[Product.sequelize.fn("DISTINCT", Product.sequelize.col("category")), "category"]], where: { active: true }, raw: true }); res.json(rows.map((row) => row.category).filter(Boolean).sort()); } catch (error) { next(error); } });
+router.get("/", optionalAuth, list);
+router.get("/:id", get);
+router.post("/", requireAuth, allowRoles("SUPER_ADMIN", "MANAGER", "SELLER"), (req, res, next) => { const parsed = z.record(z.string(), z.unknown()).safeParse(req.body); if (!parsed.success) return res.status(400).json({ error: "Expected a JSON object" }); next(); }, create);
+router.patch("/:id", requireAuth, allowRoles("SUPER_ADMIN", "MANAGER", "SELLER"), update);
+router.delete("/:id", requireAuth, allowRoles("SUPER_ADMIN", "MANAGER"), remove);

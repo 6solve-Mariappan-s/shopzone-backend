@@ -1,0 +1,193 @@
+{
+  "info": {
+    "_postman_id": "41ac7579-8889-4bf3-b006-6a1a1e1dcaf8",
+    "name": "ShopZone Independent Services",
+    "description": "Smoke tests for the ShopZone API gateway and independently deployed services. Run Register first; Postman will retain the HTTP-only localhost auth cookie. Admin and inventory writes require a seeded SUPER_ADMIN account. Checkout additionally requires a cart item and stocked inventory.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gatewayUrl", "value": "http://localhost:5000" },
+    { "key": "customerEmail", "value": "shopzone-{{$timestamp}}@example.test" },
+    { "key": "customerPassword", "value": "LocalShopZone-Test-Password-2026" },
+    { "key": "productId", "value": "" },
+    { "key": "quantity", "value": "3" },
+    { "key": "adminEmail", "value": "" },
+    { "key": "adminPassword", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Gateway",
+      "item": [
+        {
+          "name": "Health",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/health" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Gateway is healthy', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"name\":\"ShopZone Test Customer\",\"email\":\"shopzone-{{$timestamp}}@example.test\",\"password\":\"{{customerPassword}}\"}" },
+            "url": "{{gatewayUrl}}/api/auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Customer registered', () => pm.response.to.have.status(201));"] } }]
+        },
+        {
+          "name": "Current user",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/auth/me" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Auth cookie works', () => pm.response.to.have.status(200));", "pm.test('Password hash is not exposed', () => pm.expect(pm.response.json()).not.to.have.property('passwordHash'));"] } }]
+        },
+        {
+          "name": "Login seeded administrator",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}" },
+            "url": "{{gatewayUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Product",
+      "item": [
+        {
+          "name": "List products",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/products" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Product catalogue is available', () => pm.response.to.have.status(200));", "const products = pm.response.json().items;", "pm.collectionVariables.set('productId', products[0].id);", "pm.test('Seeded catalogue has 22 products', () => pm.expect(pm.response.json().total).to.eql(22));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        { "name": "Read cart", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/cart" } },
+        {
+          "name": "Add product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"productId\":\"{{productId}}\",\"quantity\":1}" },
+            "url": "{{gatewayUrl}}/api/cart"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wishlist",
+      "item": [
+        { "name": "Read wishlist", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/wishlist" } },
+        {
+          "name": "Add product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"productId\":\"{{productId}}\",\"note\":\"Postman smoke test\"}" },
+            "url": "{{gatewayUrl}}/api/wishlist"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [{ "name": "Read audit events (SUPER_ADMIN)", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/admin" } }]
+    },
+    {
+      "name": "Orders",
+      "item": [{ "name": "Read my orders", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/orders" } }]
+    },
+    {
+      "name": "Checkout",
+      "item": [
+        { "name": "Read checkout history", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/checkout" } },
+        {
+          "name": "Place COD order (requires stocked inventory)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"shippingAddress\":{\"recipient\":\"Test Customer\",\"phone\":\"9876543210\",\"line1\":\"1 Test Street\",\"city\":\"Jaipur\",\"state\":\"Rajasthan\",\"pinCode\":\"302001\"},\"method\":\"COD\"}" },
+            "url": "{{gatewayUrl}}/api/checkout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        { "name": "Read reviews", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/reviews" } },
+        {
+          "name": "Write review",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"productId\":\"{{productId}}\",\"rating\":5,\"title\":\"Postman test\",\"body\":\"Review service smoke test\"}" },
+            "url": "{{gatewayUrl}}/api/reviews"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [{ "name": "Read my payments", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/payments" } }]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        { "name": "Read stock (staff role)", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/inventory" } },
+        {
+          "name": "Stock product (SUPER_ADMIN or INVENTORY)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"productId\":\"{{productId}}\",\"quantity\":10,\"reorderLevel\":2}" },
+            "url": "{{gatewayUrl}}/api/inventory"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        { "name": "Read my notifications", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/notifications" } },
+        {
+          "name": "Create in-app notification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"channel\":\"IN_APP\",\"subject\":\"Postman test\",\"body\":\"Notification service smoke test\"}" },
+            "url": "{{gatewayUrl}}/api/notifications"
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        { "name": "Read my profiles", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/profiles" } },
+        {
+          "name": "Create profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"name\":\"ShopZone Test Customer\",\"phone\":\"9876543210\"}" },
+            "url": "{{gatewayUrl}}/api/profiles"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shipping",
+      "item": [{ "name": "Read my shipments", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/shipping" } }]
+    },
+    {
+      "name": "Coupons",
+      "item": [{ "name": "Read coupons", "request": { "method": "GET", "url": "{{gatewayUrl}}/api/coupons" } }]
+    }
+  ]
+}

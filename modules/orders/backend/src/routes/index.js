@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { z } from "zod";
+import { list, get, create, update, remove, cancel, removeCancelled } from "../controllers/entity.js";
+import { requireAuth, allowRoles } from "../middleware.js";
+export const router = Router();
+router.get("/", requireAuth, list);
+router.post("/:id/cancel", requireAuth, cancel);
+router.delete("/:id/remove", requireAuth, removeCancelled);
+router.get("/:id", requireAuth, get);
+router.post("/", requireAuth, allowRoles("CHECKOUT", "SUPER_ADMIN"), (req, res, next) => { const parsed = z.record(z.string(), z.unknown()).safeParse(req.body); if (!parsed.success) return res.status(400).json({ error: "Expected a JSON object" }); next(); }, create);
+router.patch("/:id", requireAuth, allowRoles("CHECKOUT", "SUPER_ADMIN"), update);
+router.delete("/:id", requireAuth, allowRoles("CHECKOUT", "SUPER_ADMIN"), remove);

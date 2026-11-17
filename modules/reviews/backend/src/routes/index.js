@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { z } from "zod";
+import { list, get, create, update, remove } from "../controllers/entity.js";
+import { requireAuth, allowRoles } from "../middleware.js";
+export const router = Router();
+const createReview = z.object({ productId: z.string().uuid(), rating: z.coerce.number().int().min(1).max(5), title: z.string().trim().max(160).optional(), body: z.string().trim().min(5).max(5000) });
+const updateReview = z.object({ rating: z.coerce.number().int().min(1).max(5).optional(), title: z.string().trim().max(160).nullable().optional(), body: z.string().trim().min(5).max(5000).optional() }).refine((value) => Object.keys(value).length > 0, "Provide at least one review field to update");
+router.get("/", (req, res, next) => { if (req.query.productId && !z.string().uuid().safeParse(req.query.productId).success) return res.status(400).json({ error: "Invalid productId" }); next(); }, list);
+router.get("/:id", get);
+router.post("/", requireAuth, (req, res, next) => { const parsed = createReview.safeParse(req.body); if (!parsed.success) return res.status(400).json({ error: "Invalid review", details: parsed.error.issues }); req.body = parsed.data; next(); }, create);
+router.patch("/:id", requireAuth, (req, res, next) => { const parsed = updateReview.safeParse(req.body); if (!parsed.success) return res.status(400).json({ error: "Invalid review update", details: parsed.error.issues }); req.body = parsed.data; next(); }, update);
+router.delete("/:id", requireAuth, remove);

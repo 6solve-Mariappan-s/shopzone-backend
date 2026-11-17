@@ -1,0 +1,17 @@
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import { config } from "./config.js";
+import { sequelize } from "./db.js";
+import { router } from "./routes/index.js";
+export const app = express();
+app.disable("x-powered-by");
+app.use(helmet());
+app.use(cors({ origin: config.CORS_ORIGIN, credentials: true, allowedHeaders: ["Content-Type", "Authorization"] }));
+app.use(cookieParser());
+app.use(express.json({ limit: "100kb" }));
+app.get("/health", async (_req, res, next) => { try { await sequelize.authenticate(); res.json({ status: "ok", service: "checkout", database: "shopzone_checkout" }); } catch (error) { next(error); } });
+app.use("/api/checkout", router);
+app.use((_req, res) => res.status(404).json({ error: "Route not found" }));
+app.use((error, _req, res, _next) => { console.error(error); if (res.headersSent) return; if (error.name === "SequelizeUniqueConstraintError") return res.status(409).json({ error: "Record already exists" }); if (error.name === "ZodError") return res.status(400).json({ error: "Invalid request", details: error.issues }); const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 600 ? error.status : 500; res.status(status).json({ error: status === 500 ? "Unexpected server error" : error.message }); });

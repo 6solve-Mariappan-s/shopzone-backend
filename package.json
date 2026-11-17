@@ -1,0 +1,28 @@
+{
+  "name": "shopzone",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "modules/*/backend",
+    "modules/*/frontend",
+    "infrastructure/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:all",
+    "dev:api": "npm run dev -w @shopzone/api",
+    "seed": "npm run seed -w @shopzone/api",
+    "test": "npm run test -w @shopzone/api",
+    "dev:gateway": "npm run dev --workspace @shopzone/api-gateway",
+    "dev:host": "npm run dev --workspace @shopzone/host",
+    "dev:all": "node scripts/dev-all.mjs",
+    "build:mfes": "npm run build --workspace @shopzone/host --workspace @shopzone/products-mfe --workspace @shopzone/cart-mfe --workspace @shopzone/auth-mfe --workspace @shopzone/admin-mfe --workspace @shopzone/wishlist-mfe --workspace @shopzone/orders-mfe --workspace @shopzone/checkout-mfe --workspace @shopzone/reviews-mfe --workspace @shopzone/inventory-mfe --workspace @shopzone/contact-mfe",
+    "predev:all": "npm run build:mfes"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}

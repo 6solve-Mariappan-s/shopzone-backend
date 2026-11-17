@@ -1,0 +1,156 @@
+{
+  "info": {
+    "name": "ShopZone API",
+    "description": "Core customer and staff flows for the local API. Postman stores the HTTP-only session cookie for localhost automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api" },
+    { "key": "email", "value": "customer@example.test" },
+    { "key": "password", "value": "ChangeThisPassword123!" },
+    { "key": "productId", "value": "" },
+    { "key": "addressId", "value": "" },
+    { "key": "orderId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Public catalog",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?page=1&limit=12&sort=popular"
+          }
+        },
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/categories"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer session",
+      "item": [
+        {
+          "name": "Register customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Sample Customer\",\"email\":\"{{email}}\",\"password\":\"{{password}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Current profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart and checkout",
+      "item": [
+        {
+          "name": "Get cart",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shop/cart" }
+        },
+        {
+          "name": "Add item to cart",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"productId\":\"{{productId}}\",\"quantity\":1}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/shop/cart/items"
+          }
+        },
+        {
+          "name": "Add delivery address",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"recipient\":\"Sample Customer\",\"phone\":\"9876543210\",\"line1\":\"12 Market Road\",\"city\":\"Pune\",\"district\":\"Pune\",\"state\":\"Maharashtra\",\"pinCode\":\"411001\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/shop/addresses"
+          }
+        },
+        {
+          "name": "Place COD order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"addressId\":\"{{addressId}}\",\"method\":\"COD\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/shop/checkout"
+          }
+        },
+        {
+          "name": "List my orders",
+          "request": { "method": "GET", "url": "{{baseUrl}}/shop/orders" }
+        }
+      ]
+    },
+    {
+      "name": "Staff",
+      "item": [
+        {
+          "name": "Inventory (super-admin or inventory staff)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/inventory" }
+        },
+        {
+          "name": "Sales report (super-admin or manager)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/reports/sales" }
+        },
+        {
+          "name": "Export system data (super-admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "x-confirm-export", "value": "EXPORT" }],
+            "url": "{{baseUrl}}/admin/export"
+          }
+        }
+      ]
+    }
+  ]
+}

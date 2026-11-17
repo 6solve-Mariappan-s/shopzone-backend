@@ -1,0 +1,9 @@
+.shop-notification { position: fixed; z-index: 20; top: 20px; right: 20px; display: flex; align-items: flex-start; gap: 16px; width: min(390px, calc(100vw - 32px)); padding: 16px; border: 1px solid #d5c6ae; border-radius: 12px; background: #fffdf8; color: #2c241c; box-shadow: 0 12px 36px #2c241c2b; animation: shopzone-pop .2s ease both; }
+.shop-notification-copy { min-width: 0; flex: 1; }
+.shop-notification-copy > strong { color: #31553b; }
+.shop-notification.is-error { border-color: #d7a8a4; background: #fff5f4; }
+.shop-notification.is-error .shop-notification-copy > strong { color: #8d1f2d; }
+.shop-notification.is-info .shop-notification-copy > strong { color: #554c43; }
+.shop-notification-product { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; }
+.shop-notification-product img { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
+.shop-notification > button { border: 0; background: transparent; color: #766b5f; font-size: 22px; line-height: 1; cursor: pointer; }

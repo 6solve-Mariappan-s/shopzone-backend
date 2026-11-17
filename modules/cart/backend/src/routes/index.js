@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { z } from "zod";
+import { sequelize } from "../db.js";
+import { CartItem } from "../models/CartItem.js";
+import { requireAuth } from "../middleware.js";
+export const router = Router();
+router.use(requireAuth);
+router.get("/", async (req, res, next) => { try { const items = await CartItem.findAll({ where: { userId: req.user.sub }, order: [["createdAt", "DESC"]] }); res.json({ items, totalItems: items.reduce((total, item) => total + item.quantity, 0) }); } catch (error) { next(error); } });
+router.post("/", async (req, res, next) => { try { const { productId, quantity } = z.object({ productId: z.string().uuid(), quantity: z.coerce.number().int().min(1).max(20).default(1) }).parse(req.body); const item = await sequelize.transaction(async (transaction) => { const existing = await CartItem.findOne({ where: { userId: req.user.sub, productId }, transaction, lock: transaction.LOCK.UPDATE }); if (existing) { const nextQuantity = existing.quantity + quantity; if (nextQuantity > 20) throw Object.assign(new Error("Cart quantity limit exceeded"), { status: 409 }); return existing.update({ quantity: nextQuantity }, { transaction }); } return CartItem.create({ userId: req.user.sub, productId, quantity }, { transaction }); }); res.status(201).json(item); } catch (error) { next(error); } });
+router.delete("/", async (req, res, next) => { try { await CartItem.destroy({ where: { userId: req.user.sub } }); res.status(204).end(); } catch (error) { next(error); } });
+router.patch("/:id", async (req, res, next) => { try { const { quantity } = z.object({ quantity: z.coerce.number().int().min(1).max(20) }).parse(req.body); const item = await CartItem.findOne({ where: { id: req.params.id, userId: req.user.sub } }); if (!item) return res.status(404).json({ error: "Cart item not found" }); await item.update({ quantity }); res.json(item); } catch (error) { next(error); } });
+router.delete("/:id", async (req, res, next) => { try { const removed = await CartItem.destroy({ where: { id: req.params.id, userId: req.user.sub } }); if (!removed) return res.status(404).json({ error: "Cart item not found" }); res.status(204).end(); } catch (error) { next(error); } });

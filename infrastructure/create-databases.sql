@@ -1,0 +1,14 @@
+CREATE DATABASE shopzone_products;
+CREATE DATABASE shopzone_cart;
+CREATE DATABASE shopzone_auth;
+CREATE DATABASE shopzone_wishlist;
+CREATE DATABASE shopzone_orders;
+CREATE DATABASE shopzone_checkout;
+CREATE DATABASE shopzone_reviews;
+CREATE DATABASE shopzone_inventory;
+CREATE DATABASE shopzone_admin;
+-- CREATE DATABASE shopzone_notifications;
+-- CREATE DATABASE shopzone_profiles;
+-- CREATE DATABASE shopzone_shipping;
+-- CREATE DATABASE shopzone_coupons;
+-- CREATE DATABASE shopzone_payments;
